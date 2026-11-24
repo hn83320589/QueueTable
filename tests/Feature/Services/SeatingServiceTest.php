@@ -122,3 +122,19 @@ it('logs call and seat with user and device', function () {
         ->and($logs->every(fn ($l) => $l->user_id === $this->actor->userId && $l->device_id === $this->actor->deviceId))->toBeTrue()
         ->and($logs->firstWhere('action', 'party.called')->meta['table_ids'])->toBe([$this->t1->id]);
 });
+
+it('lets a party of five take an eight-seat table after waiting fifteen minutes', function () {
+    $this->t1->update(['status' => TableStatus::Occupied]);
+    $t8 = DiningTable::factory()->create(['code' => 'T8', 'capacity' => 8]);
+    $party = Party::factory()->size(5)->create(['issued_at' => '2026-11-24 18:00:00']);
+
+    expect(fn () => $this->seating->call($party, [$t8->id], $this->actor))->toThrow(InvalidTableChoice::class);
+    expect(app(QueueStateRefresher::class)->currentSuggestions('2026-11-24')->suggestions)->toBe([]);
+
+    $this->travelTo('2026-11-24 18:15');
+    $suggestions = app(QueueStateRefresher::class)->currentSuggestions('2026-11-24')->suggestions;
+    expect($suggestions[0]->option->tableIds)->toBe([$t8->id]);
+
+    $this->seating->call($party->fresh(), [$t8->id], $this->actor);
+    expect($party->fresh()->status)->toBe(PartyStatus::Called);
+});

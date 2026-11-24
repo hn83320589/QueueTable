@@ -54,6 +54,17 @@ class SimulateCommand extends Command
             ['系統建議被拒絕', $this->counts($result->rejectedSuggestions)],
             ['重新排入被拒絕', $this->counts($result->rejectedRequeues)],
         ]);
+        $this->newLine();
+        $this->line('依人數分組（含取消的最長等候＝等到入座或放棄為止）：');
+        $this->table(['人數', '取號', '入座', '取消', '取消率', '入座者平均等候（分）', '含取消的最長等候（分）'], collect($result->bySize)->map(fn (array $g, string $label) => [
+            $label,
+            $g['issued'],
+            $g['seated'],
+            $g['cancelled'],
+            $g['cancel_rate'] === null ? '-' : round($g['cancel_rate'] * 100, 1).'%',
+            $g['avg_wait_seated'] ?? '-',
+            $g['max_wait_including_cancelled'] ?? '-',
+        ])->values()->all());
         $this->line('跳號檢查：'.($result->skipCheckPassed ? 'PASS（沒有任何客人被跳過超過 3 次）' : 'FAIL'));
         $this->line('建議一致性：'.($result->suggestionsConsistent() ? 'PASS（每個系統建議都能成功叫號）' : 'FAIL'));
 

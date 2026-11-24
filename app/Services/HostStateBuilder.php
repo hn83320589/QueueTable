@@ -6,6 +6,7 @@ use App\Domain\Enums\PartyStatus;
 use App\Domain\Enums\TableStatus;
 use App\Domain\Seating\OptionFinder;
 use App\Domain\Seating\TableSnapshot;
+use App\Domain\Seating\WaitingParty;
 use App\Models\DiningTable;
 use App\Models\Party;
 use App\Models\Seating;
@@ -134,9 +135,12 @@ class HostStateBuilder
         $isFree = fn (TableSnapshot $t): bool => $t->status === TableStatus::Available
             && ($t->heldForPartyId === null || $t->heldForPartyId === $party->id);
 
+        $waiting = new WaitingParty($party->id, $party->queue, $party->size, $party->position_key, $party->skip_count, $party->issued_at->getTimestamp());
+        $now = now()->getTimestamp();
+
         $options = [];
-        foreach ($this->finder->allOptions($party->size, $floor) as $option) {
-            if (! $this->finder->isValidChoice($party->size, $option->tableIds, $floor, $isFree)) {
+        foreach ($this->finder->allOptionsFor($waiting, $floor, $now) as $option) {
+            if (! $this->finder->isValidChoiceFor($waiting, $option->tableIds, $floor, $isFree, $now)) {
                 continue;
             }
             $options[] = [

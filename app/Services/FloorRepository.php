@@ -57,7 +57,7 @@ class FloorRepository
             ->where('status', PartyStatus::Waiting)
             ->orderBy('position_key')->orderBy('id')
             ->get()
-            ->map(fn (Party $p): WaitingParty => new WaitingParty($p->id, $p->queue, $p->size, $p->position_key, $p->skip_count))
+            ->map(fn (Party $p): WaitingParty => new WaitingParty($p->id, $p->queue, $p->size, $p->position_key, $p->skip_count, $p->issued_at->getTimestamp()))
             ->all());
     }
 

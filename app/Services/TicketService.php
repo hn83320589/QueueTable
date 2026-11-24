@@ -98,7 +98,7 @@ class TicketService
             'channel' => $channel,
             'token' => (string) Str::uuid(),
             'status' => PartyStatus::Waiting,
-            'position_key' => now()->getPreciseTimestamp(3) / 1000,
+            'position_key' => $this->nextPositionKey($date),
             'issued_at' => now(),
         ]);
 
@@ -109,6 +109,19 @@ class TicketService
         $party->update(['est_low_at_issue' => $party->est_low, 'est_high_at_issue' => $party->est_high]);
 
         return $party;
+    }
+
+    /**
+     * 取號時間（毫秒精度）作為排序鍵，並保證同一營業日內嚴格遞增：
+     * 同一毫秒取號（或測試、模擬器凍結時間）時往後推 1 毫秒，
+     * 重新排入用兩個鍵的中點時才一定能排進兩者之間。
+     */
+    private function nextPositionKey(string $date): float
+    {
+        $now = now()->getPreciseTimestamp(3) / 1000;
+        $last = Party::query()->where('business_date', $date)->max('position_key');
+
+        return is_numeric($last) && (float) $last >= $now ? (float) $last + 0.001 : $now;
     }
 
     private function nextNumber(string $date, QueueLetter $queue): int

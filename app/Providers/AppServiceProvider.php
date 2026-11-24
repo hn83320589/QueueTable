@@ -25,9 +25,13 @@ class AppServiceProvider extends ServiceProvider
         // 同一個請求內共用，才能把同一交易內的多次推播合併成一次
         $this->app->scoped(QueueBroadcaster::class);
 
-        $this->app->bind(OptionFinder::class, fn () => new OptionFinder((int) config('queuetable.max_waste')));
+        $this->app->bind(OptionFinder::class, fn () => new OptionFinder(
+            (int) config('queuetable.max_waste'),
+            (int) config('queuetable.relaxed_max_waste'),
+            (int) config('queuetable.relax_after_minutes'),
+        ));
         $this->app->bind(SeatingAllocator::class, fn ($app) => new SeatingAllocator($app->make(OptionFinder::class), (int) config('queuetable.max_skips')));
-        $this->app->bind(SkipRule::class, fn ($app) => new SkipRule($app->make(OptionFinder::class)));
+        $this->app->bind(SkipRule::class, fn ($app) => new SkipRule($app->make(OptionFinder::class), (int) config('queuetable.max_skips')));
         $this->app->bind(WaitEstimator::class, fn ($app) => new WaitEstimator(
             $app->make(SeatingAllocator::class),
             $app->make(SkipRule::class),

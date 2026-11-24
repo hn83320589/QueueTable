@@ -13,7 +13,7 @@ use Carbon\CarbonImmutable;
 
 beforeEach(function () {
     $finder = new OptionFinder(maxWaste: 2);
-    $this->estimator = new WaitEstimator(new SeatingAllocator($finder, 3), new SkipRule($finder), cleaningMinutes: 5);
+    $this->estimator = new WaitEstimator(new SeatingAllocator($finder, 3), new SkipRule($finder, 3), cleaningMinutes: 5);
     $this->now = CarbonImmutable::parse('2026-11-24 18:00');
     // A 時段 1：P25 40 / P50 50 / P75 60；B 時段 1：60 / 70 / 80
     $this->stats = new DiningStatsTable(

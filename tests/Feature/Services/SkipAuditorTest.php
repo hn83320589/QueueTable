@@ -19,6 +19,7 @@ beforeEach(function () {
 });
 
 it('recounts skips from the call log and agrees with the stored count', function () {
+    $this->t2->update(['status' => TableStatus::Disabled]);
     foreach (range(1, 3) as $i) {
         $x = Party::factory()->size(4)->create(['position_key' => 1 + $i]);
         $this->seating->call($x, [$this->t4x->id], $this->system);
@@ -32,11 +33,17 @@ it('recounts skips from the call log and agrees with the stored count', function
         ->and($this->p->fresh()->skip_count)->toBe(3);
 });
 
-it('does not count calls that used tables the party could never use', function () {
-    $x = Party::factory()->size(2)->create(['position_key' => 2]);
-    $this->seating->call($x, [$this->t2->id], $this->system);
+it('counts small parties going first and stops at three once the party is protected', function () {
+    // P（10 位）沒有空桌可坐，4 組 2 人客人輪流坐 T2：前 3 次算跳過，第 4 次 T2 對 P 沒用而不再計
+    foreach (range(1, 4) as $i) {
+        $x = Party::factory()->size(2)->create(['position_key' => 1 + $i]);
+        $this->seating->call($x, [$this->t2->id], $this->system);
+        $this->seating->checkIn($x, $this->system);
+        freeTables([$this->t2]);
+    }
 
-    expect(app(SkipAuditor::class)->audit('2026-11-24'))->not->toHaveKey($this->p->id);
+    expect(app(SkipAuditor::class)->audit('2026-11-24')[$this->p->id])->toBe(3)
+        ->and($this->p->fresh()->skip_count)->toBe(3);
 });
 
 it('ignores calls from other business days', function () {
