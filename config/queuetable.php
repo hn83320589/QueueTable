@@ -10,6 +10,10 @@ return [
     // 一張桌（或併桌）最多可以浪費幾個座位
     'max_waste' => 2,
 
+    // 等候滿幾分鐘、且沒有浪費 max_waste 以內的空桌時，允許浪費到 relaxed_max_waste 席
+    'relaxed_max_waste' => 3,
+    'relax_after_minutes' => 15,
+
     // 同一組最多被跳過幾次，之後進入保護
     'max_skips' => 3,
 

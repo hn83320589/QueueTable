@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Enums\Channel;
 use App\Domain\Enums\PartyStatus;
 use App\Exceptions\DuplicateActivePhone;
 use App\Exceptions\RequeueNotAllowed;
@@ -7,6 +8,7 @@ use App\Models\DiningTable;
 use App\Models\Party;
 use App\Services\FloorRepository;
 use App\Services\SeatingService;
+use App\Services\TicketService;
 use App\Support\ActorContext;
 
 beforeEach(function () {
@@ -104,4 +106,14 @@ it('rejects requeue when the phone already has another active ticket', function 
     Party::factory()->size(2)->create(['phone' => $r->phone]);
 
     expect(fn () => $this->seating->requeue($r, $this->system))->toThrow(DuplicateActivePhone::class);
+});
+
+it('requeues at the third position even when the others took tickets in the same millisecond', function () {
+    $r = noShowParty($this);
+    $tickets = app(TicketService::class);
+    $w = collect(range(1, 4))->map(fn ($i) => $tickets->issue(2, "客{$i}", sprintf('09300000%02d', $i), Channel::Kiosk, $this->system));
+
+    $this->seating->requeue($r, $this->system);
+
+    expect(queueOrder())->toBe([$w[0]->id, $w[1]->id, $r->id, $w[2]->id, $w[3]->id]);
 });

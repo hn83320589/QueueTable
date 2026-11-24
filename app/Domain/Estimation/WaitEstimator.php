@@ -69,13 +69,13 @@ final class WaitEstimator
 
         while ($remaining !== []) {
             $floor = $this->floorAt($input->floor, $freeAt, $t);
-            $result = $this->allocator->allocate($floor, $remaining);
+            $result = $this->allocator->allocate($floor, $remaining, $t->getTimestamp());
 
             foreach ($result->suggestions as $suggestion) {
                 $party = $this->find($remaining, $suggestion->partyId);
                 $seatedAfter[$party->id] = ($t->getTimestamp() - $now->getTimestamp()) / 60;
 
-                $skipped = $this->skipRule->skippedPartyIds($suggestion->option->tableIds, $party, $remaining, $floor);
+                $skipped = $this->skipRule->skippedPartyIds($suggestion->option->tableIds, $party, $remaining, $floor, $t->getTimestamp());
                 // 同一輪後面的建議計算跳過時，這組剛分到的桌子已經不是空的
                 $floor = $floor->with(array_combine(
                     $suggestion->option->tableIds,

@@ -75,3 +75,26 @@ it('seats the protected party as soon as its full option frees up', function () 
     $this->seating->call($this->p, [$this->t4x->id, $this->t6->id], $this->system);
     expect($this->t6->fresh()->held_for_party_id)->toBe($this->p->id);
 });
+
+it('protects a party of ten after three small parties went ahead of it', function () {
+    // 題意：10 人組沒有桌可坐，被 3 組小桌客人越過後必須進入保護，下一張對他有用的桌子保留給他
+    $t2 = DiningTable::factory()->create(['code' => 'T2', 'capacity' => 2]);
+    $this->t4x->update(['status' => TableStatus::Occupied]);
+    $small = collect(range(1, 4))->map(fn ($i) => Party::factory()->size(2)->create(['position_key' => 10 + $i]));
+
+    foreach ([0, 1, 2] as $i) {
+        $this->seating->call($small[$i], [$t2->id], $this->system);
+        $this->seating->checkIn($small[$i], $this->system);
+        freeTables([$t2]);
+    }
+    expect($this->p->fresh()->skip_count)->toBe(3);
+
+    // 第 4 組小桌客人仍可坐 2 人桌（對 10 人組沒用），不會讓他變成第 4 次
+    $this->seating->call($small[3], [$t2->id], $this->system);
+    expect($this->p->fresh()->skip_count)->toBe(3);
+
+    // T4x 空出時保留給 10 人組
+    freeTables([$this->t4x]);
+    expect($this->t4x->fresh()->held_for_party_id)->toBe($this->p->id)
+        ->and($this->t4x->fresh()->hold_reason)->toBe(HoldReason::Protected);
+});

@@ -22,8 +22,9 @@ final class SeatingAllocator
 
     /**
      * @param  list<WaitingParty>  $waiting
+     * @param  int|null  $now  目前時間（Unix 秒），用於放寬浪費上限；null 表示不放寬
      */
-    public function allocate(FloorSnapshot $floor, array $waiting): AllocationResult
+    public function allocate(FloorSnapshot $floor, array $waiting, ?int $now = null): AllocationResult
     {
         $waiting = WaitingParty::sortByOrder($waiting);
 
@@ -46,7 +47,7 @@ final class SeatingAllocator
             if (! $this->isProtected($party)) {
                 continue;
             }
-            $option = $this->finder->bestFreeOption($party->size, $floor, $isFree);
+            $option = $this->finder->bestFreeOptionFor($party, $floor, $isFree, $now);
             if ($option !== null) {
                 $suggestions[] = new Suggestion($party->id, $option);
                 foreach ($option->tableIds as $id) {
@@ -74,11 +75,11 @@ final class SeatingAllocator
             if ($this->isProtected($party)) {
                 continue;
             }
-            $option = $this->finder->bestFreeOption($party->size, $floor, $isFree);
+            $option = $this->finder->bestFreeOptionFor($party, $floor, $isFree, $now);
             if ($option === null) {
                 continue;
             }
-            $skipped = $this->skippedAhead($party, $option, $waiting, $suggested, $floor);
+            $skipped = $this->skippedAhead($party, $option, $waiting, $suggested, $skips, $floor);
             if (array_filter($skipped, fn (int $id): bool => $this->maxSkips < $skips[$id] + 1) !== []) {
                 continue;
             }
@@ -96,20 +97,23 @@ final class SeatingAllocator
     }
 
     /**
-     * 依序叫號時，這個建議會跳過哪些排在前面、本輪沒有拿到建議的組（規則同 SkipRule）。
+     * 依序叫號時，這個建議會跳過哪些排在前面、本輪沒有拿到建議的組（規則同 SkipRule）：
+     * 他們在本輪輪到時已經沒有空桌，所以未保護的一律算；已保護（含本輪累計達上限）的只有拿走相關桌才算。
      *
      * @param  list<WaitingParty>  $waiting
      * @param  array<int, true>  $suggested
+     * @param  array<int, int>  $skips  本輪累計的虛擬跳過次數
      * @return list<int>
      */
-    private function skippedAhead(WaitingParty $party, TableOption $option, array $waiting, array $suggested, FloorSnapshot $floor): array
+    private function skippedAhead(WaitingParty $party, TableOption $option, array $waiting, array $suggested, array $skips, FloorSnapshot $floor): array
     {
         $ids = [];
         foreach ($waiting as $ahead) {
             if (! $ahead->isAheadOf($party) || isset($suggested[$ahead->id])) {
                 continue;
             }
-            if (array_intersect($option->tableIds, $this->finder->relevantTableIds($ahead->size, $floor)) !== []) {
+            if ($skips[$ahead->id] < $this->maxSkips
+                || array_intersect($option->tableIds, $this->finder->relevantTableIds($ahead->size, $floor)) !== []) {
                 $ids[] = $ahead->id;
             }
         }

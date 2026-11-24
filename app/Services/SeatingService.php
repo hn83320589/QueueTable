@@ -75,7 +75,7 @@ class SeatingService
             $this->logger->record($actor, 'party.called', $party, PartyStatus::Waiting->value, PartyStatus::Called->value, [
                 'table_ids' => $tableIds,
                 'ahead' => array_values(array_map(
-                    fn (WaitingParty $w): array => ['party_id' => $w->id, 'size' => $w->size],
+                    fn (WaitingParty $w): array => ['party_id' => $w->id, 'size' => $w->size, 'issued_at' => $w->issuedAt],
                     array_filter($waiting, fn (WaitingParty $w): bool => $w->isAheadOf($this->asWaiting($party))),
                 )),
                 'skipped_party_ids' => $skipped,
@@ -258,9 +258,10 @@ class SeatingService
             && ($t->heldForPartyId === null || $t->heldForPartyId === $party->id
                 || ($t->holdReason === HoldReason::Protected && in_array($t->id, $tableIds, true)));
 
-        if (! $this->finder->isValidChoice($party->size, $tableIds, $floor, $isFree)) {
+        if (! $this->finder->isValidChoiceFor($this->asWaiting($party), $tableIds, $floor, $isFree, now()->getTimestamp())) {
             $codes = implode('+', array_map(fn (int $id): string => $floor->table($id)->code, $tableIds));
-            throw new InvalidTableChoice("{$codes} 目前不適合 {$party->size} 人（可能不空、坐不下、浪費太多座位，或有空著的單桌可用）");
+            $relaxAfter = (int) config('queuetable.relax_after_minutes');
+            throw new InvalidTableChoice("{$codes} 目前不適合 {$party->size} 人（可能不空、坐不下、浪費太多座位，或有空著的單桌可用；等候滿 {$relaxAfter} 分鐘後才可坐浪費較多的桌子）");
         }
     }
 
@@ -274,7 +275,7 @@ class SeatingService
     private function assertSkipLimit(Party $party, array $tableIds, array $waiting, FloorSnapshot $floor): array
     {
         $called = $this->asWaiting($party);
-        $skipped = $this->skipRule->skippedPartyIds($tableIds, $called, $waiting, $floor);
+        $skipped = $this->skipRule->skippedPartyIds($tableIds, $called, $waiting, $floor, now()->getTimestamp());
         $max = (int) config('queuetable.max_skips');
 
         foreach ($waiting as $w) {
@@ -302,6 +303,6 @@ class SeatingService
 
     private function asWaiting(Party $party): WaitingParty
     {
-        return new WaitingParty($party->id, $party->queue, $party->size, $party->position_key, $party->skip_count);
+        return new WaitingParty($party->id, $party->queue, $party->size, $party->position_key, $party->skip_count, $party->issued_at->getTimestamp());
     }
 }

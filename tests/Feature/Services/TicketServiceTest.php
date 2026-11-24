@@ -116,3 +116,12 @@ it('logs issue and cancel with the actor', function () {
         ->and($logs[1]->from_status)->toBe('waiting')
         ->and($logs[1]->to_status)->toBe('cancelled');
 });
+
+it('gives parties issued in the same millisecond strictly increasing positions', function () {
+    $a = ($this->issue)(2, '0912000001');
+    $b = ($this->issue)(4, '0912000002');
+    $c = ($this->issue)(2, '0912000003');
+
+    expect($a->position_key)->toBeLessThan($b->position_key)
+        ->and($b->position_key)->toBeLessThan($c->position_key);
+});

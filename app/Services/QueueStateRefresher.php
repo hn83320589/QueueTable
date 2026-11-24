@@ -38,7 +38,7 @@ class QueueStateRefresher
 
     public function currentSuggestions(string $businessDate): AllocationResult
     {
-        return $this->allocator->allocate($this->floors->floor(), $this->floors->waiting($businessDate));
+        return $this->allocator->allocate($this->floors->floor(), $this->floors->waiting($businessDate), now()->getTimestamp());
     }
 
     private function syncProtectedHolds(AllocationResult $result, ActorContext $actor): void
