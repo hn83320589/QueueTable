@@ -6,6 +6,7 @@ use App\Domain\Estimation\WaitEstimator;
 use App\Domain\Seating\OptionFinder;
 use App\Domain\Seating\SeatingAllocator;
 use App\Domain\Seating\SkipRule;
+use App\Services\QueueBroadcaster;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Date;
@@ -21,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Domain 物件的參數取自 config；用 bind（非 singleton），模擬器與測試改 config 時才會生效
+        // 同一個請求內共用，才能把同一交易內的多次推播合併成一次
+        $this->app->scoped(QueueBroadcaster::class);
+
         $this->app->bind(OptionFinder::class, fn () => new OptionFinder((int) config('queuetable.max_waste')));
         $this->app->bind(SeatingAllocator::class, fn ($app) => new SeatingAllocator($app->make(OptionFinder::class), (int) config('queuetable.max_skips')));
         $this->app->bind(SkipRule::class, fn ($app) => new SkipRule($app->make(OptionFinder::class)));

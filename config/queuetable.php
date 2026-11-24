@@ -34,7 +34,4 @@ return [
     // 完全沒有歷史資料時的預設用餐分鐘（P50），P25/P75 = ±spread
     'default_dining_minutes' => ['A' => 50, 'B' => 65, 'C' => 80, 'D' => 95],
     'default_dining_spread' => 15,
-
-    // 排程檢查過號的間隔秒數
-    'expiry_check_seconds' => 10,
 ];
