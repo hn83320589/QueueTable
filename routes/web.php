@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\TableController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Board\BoardController;
 use App\Http\Controllers\Customer\PartyStatusController;
 use App\Http\Controllers\Customer\TakeTicketController;
@@ -37,5 +39,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/tables/{table}/clean', [TableActionController::class, 'clean']);
         Route::post('/tables/{table}/disable', [TableActionController::class, 'disable']);
         Route::post('/tables/{table}/enable', [TableActionController::class, 'enable']);
+    });
+
+    // 店長：桌位設定、帳號、營業日報表
+    Route::middleware('manager')->prefix('admin')->group(function () {
+        Route::get('/tables', [TableController::class, 'index'])->name('admin.tables');
+        Route::post('/tables', [TableController::class, 'store']);
+        Route::put('/tables/{table}', [TableController::class, 'update']);
+        Route::put('/tables/{table}/adjacency', [TableController::class, 'adjacency']);
+        Route::get('/users', [UserController::class, 'index'])->name('admin.users');
+        Route::post('/users', [UserController::class, 'store']);
     });
 });
