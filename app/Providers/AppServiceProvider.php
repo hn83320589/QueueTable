@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domain\Estimation\WaitEstimator;
+use App\Domain\Seating\OptionFinder;
+use App\Domain\Seating\SeatingAllocator;
+use App\Domain\Seating\SkipRule;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Date;
@@ -16,7 +20,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Domain 物件的參數取自 config；用 bind（非 singleton），模擬器與測試改 config 時才會生效
+        $this->app->bind(OptionFinder::class, fn () => new OptionFinder((int) config('queuetable.max_waste')));
+        $this->app->bind(SeatingAllocator::class, fn ($app) => new SeatingAllocator($app->make(OptionFinder::class), (int) config('queuetable.max_skips')));
+        $this->app->bind(SkipRule::class, fn ($app) => new SkipRule($app->make(OptionFinder::class)));
+        $this->app->bind(WaitEstimator::class, fn ($app) => new WaitEstimator(
+            $app->make(SeatingAllocator::class),
+            $app->make(SkipRule::class),
+            (int) config('queuetable.cleaning_minutes'),
+        ));
     }
 
     /**
