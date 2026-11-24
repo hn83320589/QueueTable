@@ -98,3 +98,35 @@ it('widens a zero-width interval by five minutes', function () {
 
     expect([$estimate->low, $estimate->high])->toBe([0, 5]);
 });
+
+it('treats tables handed out earlier in the same round as taken when counting skips', function () {
+    /*
+     * T4（4 席）空、T2a 空、T2b 有 A 組自 17:25 用餐（與 T2a 相鄰）、T2c 有 B 組自 17:30 用餐。
+     * 等候依序：A(3 位)、P(4 位，已被跳過 2 次)、X(2 位)、Y(2 位)。現在 18:00。
+     *
+     * 18:00 同一輪：A → T4、X → T2a。P 的選項只剩 T4（已給 A）或 T2a+T2b（T2b 有人），
+     *       所以 X 拿走 T2a 時 P 被跳過第 3 次 → 進入保護。
+     * 樂觀：18:10 T2b 空出 → 保留給 P，Y 拿不到；18:35 T2c 空出 → Y 入座，等 35 分
+     * 悲觀：18:30 T2b 空出 → 保留給 P；18:55 T2c 空出 → Y 入座，等 55 分
+     * （若誤把 T4 當成 P 還能坐的桌子，P 不會被算跳過，Y 會在 18:10／18:30 拿到 T2b，變成 [10,30]）
+     */
+    $floor = makeFloor(
+        [['T4', 4], ['T2a', 2], ['T2b', 2, 'occupied'], ['T2c', 2, 'occupied']],
+        [['T2a', 'T2b']],
+    );
+    $input = new EstimatorInput(
+        now: $this->now,
+        floor: $floor,
+        seatings: [
+            new ActiveSeating([tid($floor, 'T2b')], QueueLetter::A, CarbonImmutable::parse('2026-11-24 17:25')),
+            new ActiveSeating([tid($floor, 'T2c')], QueueLetter::B, CarbonImmutable::parse('2026-11-24 17:30')),
+        ],
+        cleaningSince: [],
+        called: [],
+        waiting: [wp(1, 3, 1.0), wp(2, 4, 2.0, skip: 2), wp(3, 2, 3.0), wp(4, 2, 4.0)],
+    );
+
+    $y = $this->estimator->estimate($input, $this->stats)[4];
+
+    expect([$y->low, $y->high])->toBe([35, 55]);
+});

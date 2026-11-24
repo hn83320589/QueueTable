@@ -79,6 +79,11 @@ class SeatingService
                     array_filter($waiting, fn (WaitingParty $w): bool => $w->isAheadOf($this->asWaiting($party))),
                 )),
                 'skipped_party_ids' => $skipped,
+                // 叫號當下可用的桌子與保留對象，讓 SkipAuditor 能獨立重算「前面的組是否仍有桌可坐」
+                'free_tables' => array_values(array_map(
+                    fn (TableSnapshot $t): array => ['id' => $t->id, 'held_for' => $t->heldForPartyId],
+                    array_filter($floor->tables, fn (TableSnapshot $t): bool => $t->status === TableStatus::Available),
+                )),
             ]);
             $this->refresher->refresh($party->business_date, $actor);
 

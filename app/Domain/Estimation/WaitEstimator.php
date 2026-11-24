@@ -76,6 +76,11 @@ final class WaitEstimator
                 $seatedAfter[$party->id] = ($t->getTimestamp() - $now->getTimestamp()) / 60;
 
                 $skipped = $this->skipRule->skippedPartyIds($suggestion->option->tableIds, $party, $remaining, $floor);
+                // 同一輪後面的建議計算跳過時，這組剛分到的桌子已經不是空的
+                $floor = $floor->with(array_combine(
+                    $suggestion->option->tableIds,
+                    array_map(fn (int $id): TableSnapshot => $floor->table($id)->withStatus(TableStatus::Occupied), $suggestion->option->tableIds),
+                ));
                 $remaining = array_values(array_filter(
                     array_map(fn (WaitingParty $p) => in_array($p->id, $skipped, true) ? $p->withSkipCount($p->skipCount + 1) : $p, $remaining),
                     fn (WaitingParty $p) => $p->id !== $party->id,

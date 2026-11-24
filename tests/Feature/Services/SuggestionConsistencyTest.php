@@ -5,6 +5,7 @@ use App\Models\DiningTable;
 use App\Models\Party;
 use App\Services\QueueStateRefresher;
 use App\Services\SeatingService;
+use App\Services\SkipAuditor;
 use App\Support\ActorContext;
 
 /*
@@ -72,4 +73,19 @@ it('keeps every relevant free table for a protected party that is being suggeste
     $suggestions = app(QueueStateRefresher::class)->currentSuggestions('2026-11-24')->suggestions;
 
     expect($suggestions)->toHaveCount(1)->and($suggestions[0]->partyId)->toBe($p->id);
+});
+
+it('does not skip the earlier party when the host calls the later suggestion first', function () {
+    // P、X 都是 2 位，A2、B2 各給一組；帶位人員先按了 X 的卡片
+    ($this->table)('A2', 2);
+    ($this->table)('B2', 2);
+    $p = Party::factory()->size(2)->create(['position_key' => 1]);
+    $x = Party::factory()->size(2)->create(['position_key' => 2]);
+    $suggestions = collect(app(QueueStateRefresher::class)->currentSuggestions('2026-11-24')->suggestions)->keyBy('partyId');
+
+    $this->seating->call($x, $suggestions[$x->id]->option->tableIds, $this->system);
+    $this->seating->call($p->fresh(), $suggestions[$p->id]->option->tableIds, $this->system);
+
+    expect($p->fresh()->skip_count)->toBe(0)
+        ->and(app(SkipAuditor::class)->audit('2026-11-24'))->toBe([]);
 });
