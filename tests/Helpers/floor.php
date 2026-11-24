@@ -2,8 +2,11 @@
 
 use App\Domain\Enums\HoldReason;
 use App\Domain\Enums\TableStatus;
+use App\Domain\QueueLetter;
+use App\Domain\Seating\AllocationResult;
 use App\Domain\Seating\FloorSnapshot;
 use App\Domain\Seating\TableSnapshot;
+use App\Domain\Seating\WaitingParty;
 
 /**
  * 以桌號建立測試用桌況。id 依陣列順序從 1 開始。
@@ -48,4 +51,25 @@ function tid(FloorSnapshot $floor, string $code): int
 function codes(FloorSnapshot $floor, array $ids): array
 {
     return array_map(fn (int $id) => $floor->table($id)->code, $ids);
+}
+
+/** 測試用等候組。 */
+function wp(int $id, int $size, float $key, int $skip = 0): WaitingParty
+{
+    return new WaitingParty($id, QueueLetter::fromPartySize($size), $size, $key, $skip);
+}
+
+/**
+ * 把建議轉成 [partyId => '桌號+桌號'] 方便斷言。
+ *
+ * @return array<int, string>
+ */
+function suggestionMap(AllocationResult $result, FloorSnapshot $floor): array
+{
+    $map = [];
+    foreach ($result->suggestions as $s) {
+        $map[$s->partyId] = implode('+', codes($floor, $s->option->tableIds));
+    }
+
+    return $map;
 }
