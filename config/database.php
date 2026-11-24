@@ -44,6 +44,18 @@ return [
             'transaction_mode' => 'IMMEDIATE',
         ],
 
+        // 尖峰模擬器使用的獨立資料庫，不影響開發資料
+        'simulation' => [
+            'driver' => 'sqlite',
+            'database' => env('SIMULATION_DB_DATABASE', database_path('simulation.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+            'busy_timeout' => 5000,
+            'journal_mode' => 'wal',
+            'synchronous' => 'normal',
+            'transaction_mode' => 'IMMEDIATE',
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
