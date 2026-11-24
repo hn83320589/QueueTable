@@ -9,10 +9,10 @@
 
 題目原文見 [`docs/requirements.md`](docs/requirements.md)，設計文件見 [`docs/superpowers/specs/2026-11-24-queuetable-design.md`](docs/superpowers/specs/2026-11-24-queuetable-design.md)。
 
-| 帶位平板 | 門口看板 |
-|---|---|
-| ![帶位平板](docs/screenshots/host.png) | ![門口看板](docs/screenshots/board.png) |
-| **顧客頁面** | **營業日報表** |
+| 帶位平板                                   | 門口看板                                   |
+| ------------------------------------------ | ------------------------------------------ |
+| ![帶位平板](docs/screenshots/host.png)     | ![門口看板](docs/screenshots/board.png)    |
+| **顧客頁面**                               | **營業日報表**                             |
 | ![顧客頁面](docs/screenshots/customer.png) | ![營業日報表](docs/screenshots/report.png) |
 
 ---
@@ -34,14 +34,14 @@
 
 ## 1. 技術與需求環境
 
-| 項目 | 版本 / 說明 |
-|---|---|
-| PHP | 8.3 以上（CI 同時驗證 8.3 與 8.4），需要 `pdo_sqlite` |
-| Node.js | 22 以上 |
-| 後端 | Laravel 13、Laravel Fortify（登入）、Laravel Reverb（WebSocket） |
-| 前端 | Vue 3 + TypeScript + Inertia v3、Tailwind CSS 4，以 Vite 建置 |
-| 資料庫 | SQLite（WAL 模式、`IMMEDIATE` 交易） |
-| 測試 | Pest 4、PHPStan level 7、Pint、vite-plus lint |
+| 項目    | 版本 / 說明                                                      |
+| ------- | ---------------------------------------------------------------- |
+| PHP     | 8.3 以上（CI 同時驗證 8.3 與 8.4），需要 `pdo_sqlite`            |
+| Node.js | 22 以上                                                          |
+| 後端    | Laravel 13、Laravel Fortify（登入）、Laravel Reverb（WebSocket） |
+| 前端    | Vue 3 + TypeScript + Inertia v3、Tailwind CSS 4，以 Vite 建置    |
+| 資料庫  | SQLite（WAL 模式、`IMMEDIATE` 交易）                             |
+| 測試    | Pest 4、PHPStan level 7、Pint、vite-plus lint                    |
 
 不需要 Docker。
 
@@ -60,29 +60,29 @@ composer run dev               # 同時啟動網站、Reverb、排程（過號�
 
 `composer run dev` 會同時啟動四個程序：
 
-| 程序 | 指令 | 用途 |
-|---|---|---|
-| server | `php artisan serve` | 網站，預設 http://127.0.0.1:8000 |
-| reverb | `php artisan reverb:start` | WebSocket，預設 port 8080 |
-| schedule | `php artisan schedule:work` | 每 10 秒檢查叫號是否超過 3 分鐘 |
-| vite | `npm run dev` | 前端開發伺服器 |
+| 程序     | 指令                        | 用途                             |
+| -------- | --------------------------- | -------------------------------- |
+| server   | `php artisan serve`         | 網站，預設 http://127.0.0.1:8000 |
+| reverb   | `php artisan reverb:start`  | WebSocket，預設 port 8080        |
+| schedule | `php artisan schedule:work` | 每 10 秒檢查叫號是否超過 3 分鐘  |
+| vite     | `npm run dev`               | 前端開發伺服器                   |
 
 推播使用 `ShouldBroadcastNow` 在交易提交後直接送出，**不需要 queue worker**。
 
 ### 頁面與展示帳號
 
-| 頁面 | 網址 | 說明 |
-|---|---|---|
-| 入口 | `/` | 連到下列頁面 |
-| 門口看板 | `/board` | 16:9 螢幕，各佇列叫到的號碼、等候組數、取號 QR Code |
-| 手機取號 | `/take` | 顧客輸入人數、稱呼、手機 |
-| 顧客狀態 | `/q/{token}` | 取號後拿到的連結，可自行取消 |
-| 帶位平板 | `/host` | 登入後先選擇是「平板 A」或「平板 B」 |
-| 店長後台 | `/admin/reports`、`/admin/tables`、`/admin/users` | 營業日報表與 CSV、桌位與相鄰設定、建立帳號 |
+| 頁面     | 網址                                              | 說明                                                |
+| -------- | ------------------------------------------------- | --------------------------------------------------- |
+| 入口     | `/`                                               | 連到下列頁面                                        |
+| 門口看板 | `/board`                                          | 16:9 螢幕，各佇列叫到的號碼、等候組數、取號 QR Code |
+| 手機取號 | `/take`                                           | 顧客輸入人數、稱呼、手機                            |
+| 顧客狀態 | `/q/{token}`                                      | 取號後拿到的連結，可自行取消                        |
+| 帶位平板 | `/host`                                           | 登入後先選擇是「平板 A」或「平板 B」                |
+| 店長後台 | `/admin/reports`、`/admin/tables`、`/admin/users` | 營業日報表與 CSV、桌位與相鄰設定、建立帳號          |
 
-| 帳號 | 密碼 | 角色 |
-|---|---|---|
-| `manager@queuetable.test` | `password` | 店長 |
+| 帳號                                             | 密碼       | 角色     |
+| ------------------------------------------------ | ---------- | -------- |
+| `manager@queuetable.test`                        | `password` | 店長     |
 | `host1@queuetable.test`、`host2@queuetable.test` | `password` | 帶位人員 |
 
 > 這些帳號只供展示。帶位人員帳號由店長在後台建立，系統不開放自行註冊。
@@ -176,9 +176,9 @@ php artisan reverb:start --host=0.0.0.0
 
 1. **歷史用餐時間**：取近 14 個營業日、同佇列、同時段（17–18、19–20、21–22 點、其他）的用餐時間，計算 P25、P50、P75（nearest-rank，方便手算）。樣本少於 5 筆時，依序退回「同佇列全部時段」→「設定檔預設值」。
 2. **每張桌子何時空出**：
-   - 用餐中：入座時間 + 該組的用餐時間 + 清桌 5 分鐘。
-   - 清桌中：開始清桌時間 + 5 分鐘。
-   - 已叫號：現在 + 用餐時間 + 5 分鐘。
+    - 用餐中：入座時間 + 該組的用餐時間 + 清桌 5 分鐘。
+    - 清桌中：開始清桌時間 + 5 分鐘。
+    - 已叫號：現在 + 用餐時間 + 5 分鐘。
 3. **前推模擬**：在虛擬時間上依序讓桌子空出，每次空出就呼叫同一個 `SeatingAllocator` 決定誰入座（包含併桌、跳號計數、保護保留），得到每組的預計入座時間。
 4. **兩個情境**：樂觀情境用 P25、悲觀情境用 P75 各跑一次。區間 = `[floor5(兩者較小), ceil5(兩者較大)]`，顯示成「約 15–25 分鐘」。
 5. 有客人入座、離開、取消、過號時都會重算所有人的預估並推播。
@@ -199,38 +199,38 @@ php artisan queuetable:simulate --seed=42 --json=storage/app/sim.json   # 另存
 - **加速時鐘**：虛擬時間每步 30 秒，以 `Carbon::setTestNow()` 推進，從 17:00 跑到所有客人處理完（最晚 03:00）。完整一晚在一般筆電約 30 秒。
 - 每一步呼叫**真正的服務層**：新客取號 → 叫號的客人報到 → 用餐結束離開 → 清桌完成 → 過號檢查與重新排入 → 等不下去的客人取消 → 帶位人員依建議叫號。
 - 參數在 `config/simulation.php`：
-  - 到達率依時段不同，Poisson 到達，19 點最多每小時 30 組；01:30 後不再取號。
-  - 人數分布：2 人 30%、4 人 25%……9–12 人合計 3%。
-  - 用餐時間：與歷史資料相同的 lognormal 模型。
-  - 8% 叫號後不報到，其中一半回來要求重新排入。
-  - 每組耐心 30–90 分鐘，等超過就取消；另有 3% 隨機中途取消。
-  - 清桌 3–7 分鐘。
+    - 到達率依時段不同，Poisson 到達，19 點最多每小時 30 組；01:30 後不再取號。
+    - 人數分布：2 人 30%、4 人 25%……9–12 人合計 3%。
+    - 用餐時間：與歷史資料相同的 lognormal 模型。
+    - 8% 叫號後不報到，其中一半回來要求重新排入。
+    - 每組耐心 30–90 分鐘，等超過就取消；另有 3% 隨機中途取消。
+    - 清桌 3–7 分鐘。
 - 相同 seed 結果完全相同（有測試）。
 
 ### 量測結果（營業日 2026-11-24，17:00–02:00）
 
 主要結果（seed 42）：
 
-| 項目 | 結果 |
-|---|---|
-| 取號 / 入座 / 過號 / 取消 | 120 / 106 / 7 / 9 組 |
-| **預估平均絕對誤差（MAE）** | **5.4 分鐘** |
-| 實際等候落在預估區間內 | 78.3% |
-| 平均等候 | 19.1 分鐘 |
-| **最長等候** | **78 分鐘**（A 60、B 57、C 78、D 41） |
-| 最多被跳過次數（稽核 / 系統） | 3 / 3，**PASS** |
-| 桌位使用率（17:00–02:00） | 67.0% |
-| 結束時仍在等候 | 0 組 |
+| 項目                          | 結果                                  |
+| ----------------------------- | ------------------------------------- |
+| 取號 / 入座 / 過號 / 取消     | 120 / 106 / 7 / 9 組                  |
+| **預估平均絕對誤差（MAE）**   | **5.4 分鐘**                          |
+| 實際等候落在預估區間內        | 78.3%                                 |
+| 平均等候                      | 19.1 分鐘                             |
+| **最長等候**                  | **78 分鐘**（A 60、B 57、C 78、D 41） |
+| 最多被跳過次數（稽核 / 系統） | 3 / 3，**PASS**                       |
+| 桌位使用率（17:00–02:00）     | 67.0%                                 |
+| 結束時仍在等候                | 0 組                                  |
 
 不同 seed 的波動：
 
 | seed | 取號 | 入座 | 取消 | MAE（分） | 區間命中率 | 平均等候（分） | 最長等候（分） | 最多被跳過 | 使用率 |
-|---|---|---|---|---|---|---|---|---|---|
-| 42 | 120 | 106 | 9 | 5.4 | 78.3% | 19.1 | 78 | 3（PASS） | 67.0% |
-| 1 | 135 | 102 | 26 | 9.7 | 73.5% | 22.9 | 85 | 3（PASS） | 61.0% |
-| 2 | 130 | 115 | 12 | 3.9 | 92.2% | 11.9 | 55 | 3（PASS） | 71.0% |
-| 3 | 134 | 105 | 25 | 8.3 | 70.5% | 19.7 | 76 | 3（PASS） | 68.7% |
-| 4 | 111 | 99 | 7 | 3.7 | 86.9% | 8.7 | 48 | 3（PASS） | 58.1% |
+| ---- | ---- | ---- | ---- | --------- | ---------- | -------------- | -------------- | ---------- | ------ |
+| 42   | 120  | 106  | 9    | 5.4       | 78.3%      | 19.1           | 78             | 3（PASS）  | 67.0%  |
+| 1    | 135  | 102  | 26   | 9.7       | 73.5%      | 22.9           | 85             | 3（PASS）  | 61.0%  |
+| 2    | 130  | 115  | 12   | 3.9       | 92.2%      | 11.9           | 55             | 3（PASS）  | 71.0%  |
+| 3    | 134  | 105  | 25   | 8.3       | 70.5%      | 19.7           | 76             | 3（PASS）  | 68.7%  |
+| 4    | 111  | 99   | 7    | 3.7       | 86.9%      | 8.7            | 48             | 3（PASS）  | 58.1%  |
 
 五次模擬的 MAE 平均 6.2 分鐘、最長等候 48–85 分鐘。每一次都有客人被跳過滿 3 次並進入保護，但沒有任何人被跳過第 4 次，而且稽核重算的次數與系統紀錄一致。到客量越大（seed 1、3），取消的人越多，預估誤差也越大：取消會讓後面的人比預估更早入座。
 
@@ -322,30 +322,30 @@ flowchart TB
 
 ### 主要資料表
 
-| 表 | 用途 | 關鍵約束 |
-|---|---|---|
-| `parties` | 候位組 | `unique(business_date, ticket_code)`、partial unique `(business_date, phone)` |
-| `ticket_counters` | 每營業日每佇列的號碼計數 | `unique(business_date, queue)` |
-| `dining_tables` | 桌子，含 `held_for_party_id` + `hold_reason`（叫號保留／保護保留） | `unique(code)` |
-| `table_adjacencies` | 可併桌的相鄰桌 | `unique(table_a_id, table_b_id)` |
-| `seatings`、`seating_tables` | 入座紀錄與使用的桌子 | `unique(party_id)`、partial unique `(table_id) WHERE released_at IS NULL` |
-| `notification_logs` | 「即將輪到」通知紀錄 | `unique(party_id, type)` |
-| `activity_logs` | 操作紀錄：時間、操作者類型、使用者、平板、前後狀態 | |
-| `devices` | 帶位平板 | |
+| 表                           | 用途                                                               | 關鍵約束                                                                      |
+| ---------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `parties`                    | 候位組                                                             | `unique(business_date, ticket_code)`、partial unique `(business_date, phone)` |
+| `ticket_counters`            | 每營業日每佇列的號碼計數                                           | `unique(business_date, queue)`                                                |
+| `dining_tables`              | 桌子，含 `held_for_party_id` + `hold_reason`（叫號保留／保護保留） | `unique(code)`                                                                |
+| `table_adjacencies`          | 可併桌的相鄰桌                                                     | `unique(table_a_id, table_b_id)`                                              |
+| `seatings`、`seating_tables` | 入座紀錄與使用的桌子                                               | `unique(party_id)`、partial unique `(table_id) WHERE released_at IS NULL`     |
+| `notification_logs`          | 「即將輪到」通知紀錄                                               | `unique(party_id, type)`                                                      |
+| `activity_logs`              | 操作紀錄：時間、操作者類型、使用者、平板、前後狀態                 |                                                                               |
+| `devices`                    | 帶位平板                                                           |                                                                               |
 
 ### 桌位配置（seeder）
 
 20 張桌、80 席。搭配「浪費不超過 2 席」，1 到 12 人都至少有一種坐法（有測試）。
 
-| 區域 | 桌號 | 座位 | 相鄰（可併桌） |
-|---|---|---|---|
-| 室內 | I01–I04 | 2 | I01–I02、I03–I04 |
-| 室內 | I05–I10 | 4 | I05–I06、I07–I08、I09–I10、I10–I11 |
-| 室內 | I11–I12 | 6 | I11–I12 |
-| 戶外 | T01–T03 | 4 | T01–T02、T02–T03 |
-| 戶外 | T04–T05 | 8 | T04–T05 |
-| 吧台 | B01–B02 | 2 | B01–B02 |
-| 吧台 | B03 | 4 | |
+| 區域 | 桌號    | 座位 | 相鄰（可併桌）                     |
+| ---- | ------- | ---- | ---------------------------------- |
+| 室內 | I01–I04 | 2    | I01–I02、I03–I04                   |
+| 室內 | I05–I10 | 4    | I05–I06、I07–I08、I09–I10、I10–I11 |
+| 室內 | I11–I12 | 6    | I11–I12                            |
+| 戶外 | T01–T03 | 4    | T01–T02、T02–T03                   |
+| 戶外 | T04–T05 | 8    | T04–T05                            |
+| 吧台 | B01–B02 | 2    | B01–B02                            |
+| 吧台 | B03     | 4    |                                    |
 
 歷史資料為今天以前 30 個營業日，每晚約 90–125 組（固定亂數種子），用和模擬器相同的用餐時間模型產生。
 
@@ -358,22 +358,22 @@ composer ci:check    # 再加上前端格式、lint 與 TypeScript 型別檢查�
 
 目前共 214 個測試案例（165 個測試函式，部分以 dataset 展開），全部通過。GitHub Actions 在 PHP 8.3 與 8.4 上執行 `composer ci:check`。
 
-| 驗收 | 證據 |
-|---|---|
-| 1. 安裝後可開啟三個頁面；20 張桌與 30 天歷史 | `tests/Feature/Http/AccessControlTest.php`、`tests/Feature/Database/SeederTest.php`；本 README 第 2 節 |
-| 2. 號碼格式、不重複、不跳號 | `tests/Feature/Services/TicketServiceTest.php`、`tests/Feature/Database/ConstraintsTest.php` |
-| 3. 同手機重複取號被拒並顯示原因 | `TicketServiceTest`（含不同格式的同一支手機）、`tests/Feature/Http/CustomerFlowTest.php` |
-| 4. 浪費最少、只有併桌坐得下才併桌、只併相鄰桌 | `tests/Unit/Domain/OptionFinderTest.php`、`SeatingServiceTest` |
-| 5. 第 4 次跳過之前保留桌子 | `tests/Unit/Domain/SeatingAllocatorTest.php`、`SkipRuleTest.php`、`tests/Feature/Services/SkipProtectionTest.php` |
-| 6. 3 分鐘過號、重新排入第 3 位、第二次過號不能再排入 | `tests/Feature/Services/NoShowTest.php`（以 `travelTo` 控制時鐘） |
-| 7. 2 秒內更新看板與顧客頁 | `tests/Feature/Broadcasting/QueueBroadcastTest.php`；第 7 節延遲量測（最長 34 ms） |
-| 8. 前面剩 2 組時剛好一則通知 | `tests/Feature/Services/QueueStateRefresherTest.php` |
-| 9. 同桌不帶兩組、同組不帶兩桌 | `SeatingServiceTest`、`ConstraintsTest` |
-| 10. 預估與手算一致 | `tests/Unit/Domain/WaitEstimatorTest.php`、`DiningStatsTest.php` |
-| 11. 模擬一晚，MAE 與最長等候寫在 README，沒有人被跳過超過 3 次 | 第 6 節；`tests/Feature/Simulation/SimulateCommandTest.php`、`SkipAuditorTest.php` |
-| 12. 報表與手算一致；CSV 用 Excel 開啟不亂碼 | `tests/Feature/Reports/ReportBuilderTest.php`、`ReportCsvTest.php`（UTF-8 BOM） |
-| 13. 所有狀態變更都有時間、操作人員、平板 | `ActivityLoggerTest`、`TableServiceTest`、`SeatingServiceTest`、`HostActionsTest` |
-| 14. 測試至少 45 個且全數通過 | `composer test` |
+| 驗收                                                           | 證據                                                                                                              |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1. 安裝後可開啟三個頁面；20 張桌與 30 天歷史                   | `tests/Feature/Http/AccessControlTest.php`、`tests/Feature/Database/SeederTest.php`；本 README 第 2 節            |
+| 2. 號碼格式、不重複、不跳號                                    | `tests/Feature/Services/TicketServiceTest.php`、`tests/Feature/Database/ConstraintsTest.php`                      |
+| 3. 同手機重複取號被拒並顯示原因                                | `TicketServiceTest`（含不同格式的同一支手機）、`tests/Feature/Http/CustomerFlowTest.php`                          |
+| 4. 浪費最少、只有併桌坐得下才併桌、只併相鄰桌                  | `tests/Unit/Domain/OptionFinderTest.php`、`SeatingServiceTest`                                                    |
+| 5. 第 4 次跳過之前保留桌子                                     | `tests/Unit/Domain/SeatingAllocatorTest.php`、`SkipRuleTest.php`、`tests/Feature/Services/SkipProtectionTest.php` |
+| 6. 3 分鐘過號、重新排入第 3 位、第二次過號不能再排入           | `tests/Feature/Services/NoShowTest.php`（以 `travelTo` 控制時鐘）                                                 |
+| 7. 2 秒內更新看板與顧客頁                                      | `tests/Feature/Broadcasting/QueueBroadcastTest.php`；第 7 節延遲量測（最長 34 ms）                                |
+| 8. 前面剩 2 組時剛好一則通知                                   | `tests/Feature/Services/QueueStateRefresherTest.php`                                                              |
+| 9. 同桌不帶兩組、同組不帶兩桌                                  | `SeatingServiceTest`、`ConstraintsTest`                                                                           |
+| 10. 預估與手算一致                                             | `tests/Unit/Domain/WaitEstimatorTest.php`、`DiningStatsTest.php`                                                  |
+| 11. 模擬一晚，MAE 與最長等候寫在 README，沒有人被跳過超過 3 次 | 第 6 節；`tests/Feature/Simulation/SimulateCommandTest.php`、`SkipAuditorTest.php`                                |
+| 12. 報表與手算一致；CSV 用 Excel 開啟不亂碼                    | `tests/Feature/Reports/ReportBuilderTest.php`、`ReportCsvTest.php`（UTF-8 BOM）                                   |
+| 13. 所有狀態變更都有時間、操作人員、平板                       | `ActivityLoggerTest`、`TableServiceTest`、`SeatingServiceTest`、`HostActionsTest`                                 |
+| 14. 測試至少 45 個且全數通過                                   | `composer test`                                                                                                   |
 
 ## 10. 已知限制
 
