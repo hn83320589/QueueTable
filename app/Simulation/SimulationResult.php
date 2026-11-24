@@ -8,6 +8,7 @@ final readonly class SimulationResult
      * @param  array<string, int|null>  $perQueueMaxWait
      * @param  array<string, int>  $rejectedSuggestions  系統建議被叫號服務拒絕的次數（依例外類別）
      * @param  array<string, int>  $rejectedRequeues  重新排入被拒絕的次數（依例外類別）
+     * @param  array<string, array{issued: int, seated: int, cancelled: int, cancel_rate: float|null, avg_wait_seated: float|null, max_wait_including_cancelled: int|null}>  $bySize  依人數分組
      */
     public function __construct(
         public int $seed,
@@ -28,6 +29,7 @@ final readonly class SimulationResult
         public int $unservedAtEnd,
         public array $rejectedSuggestions = [],
         public array $rejectedRequeues = [],
+        public array $bySize = [],
     ) {}
 
     /** 系統給的每個建議都被叫號服務接受（建議演算法與叫號檢查一致） */
@@ -60,6 +62,7 @@ final readonly class SimulationResult
             'unserved_at_end' => $this->unservedAtEnd,
             'rejected_suggestions' => $this->rejectedSuggestions,
             'rejected_requeues' => $this->rejectedRequeues,
+            'by_size' => $this->bySize,
         ];
     }
 }

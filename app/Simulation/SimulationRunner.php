@@ -227,7 +227,45 @@ final class SimulationRunner
             unservedAtEnd: $parties->filter(fn (Party $p): bool => $p->status->isActive())->count(),
             rejectedSuggestions: $rejected,
             rejectedRequeues: $requeueRejected,
+            bySize: $this->bySize($parties, $end),
         );
+    }
+
+    /**
+     * 依人數分組的取號、入座、取消與等候。
+     * 「含取消的最長等候」把等不下去而取消的組也算進來（等到取消為止），
+     * 避免只看入座者時，大組客人等到放棄的情況被藏起來。
+     *
+     * @param  \Illuminate\Support\Collection<int, Party>  $parties
+     * @return array<string, array{issued: int, seated: int, cancelled: int, cancel_rate: float|null, avg_wait_seated: float|null, max_wait_including_cancelled: int|null}>
+     */
+    private function bySize($parties, CarbonImmutable $end): array
+    {
+        $buckets = ['1–2' => [1, 2], '3–4' => [3, 4], '5–6' => [5, 6], '7–8' => [7, 8], '9–12' => [9, 12]];
+        $result = [];
+
+        foreach ($buckets as $label => [$min, $max]) {
+            $group = $parties->filter(fn (Party $p): bool => $p->size >= $min && $p->size <= $max);
+            $seated = $group->filter(fn (Party $p): bool => $p->seated_at !== null);
+            $cancelled = $group->filter(fn (Party $p): bool => $p->status === PartyStatus::Cancelled)->count();
+            $waits = $group->map(function (Party $p) use ($end): float {
+                $until = $p->seated_at ?? $p->cancelled_at ?? $p->called_at ?? $end;
+
+                return ($until->getTimestamp() - $p->issued_at->getTimestamp()) / 60;
+            });
+            $seatedWaits = $seated->map(fn (Party $p): float => (($p->seated_at?->getTimestamp() ?? 0) - $p->issued_at->getTimestamp()) / 60);
+
+            $result[$label] = [
+                'issued' => $group->count(),
+                'seated' => $seated->count(),
+                'cancelled' => $cancelled,
+                'cancel_rate' => $group->isEmpty() ? null : round($cancelled / $group->count(), 3),
+                'avg_wait_seated' => $seatedWaits->isEmpty() ? null : round((float) $seatedWaits->avg(), 1),
+                'max_wait_including_cancelled' => $waits->isEmpty() ? null : (int) round((float) $waits->max()),
+            ];
+        }
+
+        return $result;
     }
 
     /**
