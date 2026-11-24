@@ -51,14 +51,25 @@ class SimulateCommand extends Command
             ['最多被跳過次數（稽核 / 系統紀錄）', "{$result->maxSkipAudited} / {$result->maxSkipStored}"],
             ['桌位使用率（17:00–02:00）', round($result->utilization * 100, 1).'%'],
             ['結束時仍在等候（組）', $result->unservedAtEnd],
+            ['系統建議被拒絕', $this->counts($result->rejectedSuggestions)],
+            ['重新排入被拒絕', $this->counts($result->rejectedRequeues)],
         ]);
         $this->line('跳號檢查：'.($result->skipCheckPassed ? 'PASS（沒有任何客人被跳過超過 3 次）' : 'FAIL'));
+        $this->line('建議一致性：'.($result->suggestionsConsistent() ? 'PASS（每個系統建議都能成功叫號）' : 'FAIL'));
 
         if ($path = $this->option('json')) {
             File::put((string) $path, json_encode($result->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         }
 
-        return $result->skipCheckPassed ? self::SUCCESS : self::FAILURE;
+        return $result->skipCheckPassed && $result->suggestionsConsistent() ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     */
+    private function counts(array $counts): string
+    {
+        return $counts === [] ? '0' : collect($counts)->map(fn (int $n, string $k) => "{$k} {$n} 次")->implode('、');
     }
 
     /**

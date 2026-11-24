@@ -64,6 +64,10 @@ final class SimulationRunner
         $cleanAt = [];
         /** @var array<int, CarbonImmutable> $requeueAt */
         $requeueAt = [];
+        /** @var array<string, int> $rejected 系統建議被叫號服務拒絕的次數（依例外類別） */
+        $rejected = [];
+        /** @var array<string, int> $requeueRejected */
+        $requeueRejected = [];
         $next = 0;
         $t = $open;
 
@@ -120,7 +124,7 @@ final class SimulationRunner
             }
             foreach ($requeueAt as $partyId => $at) {
                 if ($at->lessThanOrEqualTo($t)) {
-                    $this->attempt(fn () => $this->seating->requeue(Party::findOrFail($partyId), $actor));
+                    $this->attempt(fn () => $this->seating->requeue(Party::findOrFail($partyId), $actor), $requeueRejected);
                     unset($requeueAt[$partyId]);
                 }
             }
@@ -134,9 +138,14 @@ final class SimulationRunner
                 }
             }
 
-            // 7. 帶位人員依系統建議叫號
-            foreach ($this->refresher->currentSuggestions($date)->suggestions as $suggestion) {
-                $this->attempt(fn () => $this->seating->call(Party::findOrFail($suggestion->partyId), $suggestion->option->tableIds, $actor));
+            // 7. 帶位人員依系統建議叫號：和平板一樣，每叫一組就重新取得建議
+            //    （叫號會釋放或改變保留，舊的建議卡可能已經不是最佳選項）
+            while (($suggestion = $this->refresher->currentSuggestions($date)->suggestions[0] ?? null) !== null) {
+                $before = array_sum($rejected);
+                $this->attempt(fn () => $this->seating->call(Party::findOrFail($suggestion->partyId), $suggestion->option->tableIds, $actor), $rejected);
+                if (array_sum($rejected) > $before) {
+                    break; // 建議被拒絕：已計數，下一步再試，避免無限重試
+                }
             }
 
             $active = Party::query()->where('business_date', $date)->whereIn('status', [PartyStatus::Waiting, PartyStatus::Called])->exists();
@@ -145,21 +154,27 @@ final class SimulationRunner
             }
         }
 
-        $result = $this->summarize($seed, $date, $config, $open, CarbonImmutable::instance(now()));
+        ksort($rejected);
+        ksort($requeueRejected);
+        $result = $this->summarize($seed, $date, $config, $open, CarbonImmutable::instance(now()), $rejected, $requeueRejected);
         Carbon::setTestNow();
 
         return $result;
     }
 
     /**
-     * 業務規則拒絕（例如保護保留的桌子）是正常情況，略過即可；其他錯誤照常拋出。
+     * 執行一個可能被業務規則拒絕的動作，依例外類別計數（不吞掉：結果會輸出並影響 PASS/FAIL）。
+     * 其他例外照常拋出。
+     *
+     * @param  array<string, int>  $rejected
      */
-    private function attempt(callable $action): void
+    private function attempt(callable $action, array &$rejected): void
     {
         try {
             $action();
-        } catch (QueueTableException) {
-            // 建議被其他規則否決：下一步會重新計算
+        } catch (QueueTableException $e) {
+            $key = class_basename($e);
+            $rejected[$key] = ($rejected[$key] ?? 0) + 1;
         }
     }
 
@@ -173,8 +188,10 @@ final class SimulationRunner
 
     /**
      * @param  array<string, mixed>  $config
+     * @param  array<string, int>  $rejected
+     * @param  array<string, int>  $requeueRejected
      */
-    private function summarize(int $seed, string $date, array $config, CarbonImmutable $open, CarbonImmutable $end): SimulationResult
+    private function summarize(int $seed, string $date, array $config, CarbonImmutable $open, CarbonImmutable $end, array $rejected, array $requeueRejected): SimulationResult
     {
         $report = $this->reports->build($date);
         $parties = Party::query()->where('business_date', $date)->get();
@@ -208,6 +225,8 @@ final class SimulationRunner
             skipCheckPassed: $maxAudited <= (int) config('queuetable.max_skips') && $maxStored <= (int) config('queuetable.max_skips') && $maxAudited === $maxStored,
             utilization: $this->utilization($date, $open, SimClock::at($date, (string) $config['close']), $end),
             unservedAtEnd: $parties->filter(fn (Party $p): bool => $p->status->isActive())->count(),
+            rejectedSuggestions: $rejected,
+            rejectedRequeues: $requeueRejected,
         );
     }
 

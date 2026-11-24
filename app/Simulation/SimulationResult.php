@@ -6,6 +6,8 @@ final readonly class SimulationResult
 {
     /**
      * @param  array<string, int|null>  $perQueueMaxWait
+     * @param  array<string, int>  $rejectedSuggestions  系統建議被叫號服務拒絕的次數（依例外類別）
+     * @param  array<string, int>  $rejectedRequeues  重新排入被拒絕的次數（依例外類別）
      */
     public function __construct(
         public int $seed,
@@ -24,7 +26,15 @@ final readonly class SimulationResult
         public bool $skipCheckPassed,
         public float $utilization,
         public int $unservedAtEnd,
+        public array $rejectedSuggestions = [],
+        public array $rejectedRequeues = [],
     ) {}
+
+    /** 系統給的每個建議都被叫號服務接受（建議演算法與叫號檢查一致） */
+    public function suggestionsConsistent(): bool
+    {
+        return $this->rejectedSuggestions === [];
+    }
 
     /**
      * @return array<string, mixed>
@@ -48,6 +58,8 @@ final readonly class SimulationResult
             'skip_check_passed' => $this->skipCheckPassed,
             'utilization' => $this->utilization,
             'unserved_at_end' => $this->unservedAtEnd,
+            'rejected_suggestions' => $this->rejectedSuggestions,
+            'rejected_requeues' => $this->rejectedRequeues,
         ];
     }
 }

@@ -235,7 +235,7 @@ class SeatingService
 
     /**
      * 桌子必須構成一個適合的選項（坐得下、浪費不超標、併桌須相鄰且沒有空著的單桌）。
-     * 這裡把「保護保留」視為空著，交給後面的跳號關卡判斷，錯誤訊息才會正確。
+     * 被選中的保護保留桌視為空著，交給後面的跳號關卡判斷，錯誤訊息才會正確。
      *
      * @param  list<int>  $tableIds
      */
@@ -247,8 +247,11 @@ class SeatingService
             }
         }
 
+        // 被選中的保護保留桌視為空著（交給跳號關卡給出正確訊息）；
+        // 其他保護保留桌和建議演算法一樣視為不空，否則「有空著的單桌」會誤判而拒絕合法的併桌。
         $isFree = fn (TableSnapshot $t): bool => $t->status === TableStatus::Available
-            && ($t->heldForPartyId === null || $t->heldForPartyId === $party->id || $t->holdReason === HoldReason::Protected);
+            && ($t->heldForPartyId === null || $t->heldForPartyId === $party->id
+                || ($t->holdReason === HoldReason::Protected && in_array($t->id, $tableIds, true)));
 
         if (! $this->finder->isValidChoice($party->size, $tableIds, $floor, $isFree)) {
             $codes = implode('+', array_map(fn (int $id): string => $floor->table($id)->code, $tableIds));

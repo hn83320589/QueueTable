@@ -15,6 +15,7 @@ function simulate(object $test, int $seed, string $json): array
 {
     $test->artisan('queuetable:simulate', ['--seed' => $seed, '--date' => '2026-11-24', '--until' => '18:30', '--json' => $json])
         ->expectsOutputToContain('跳號檢查：PASS')
+        ->expectsOutputToContain('建議一致性：PASS')
         ->assertExitCode(0);
 
     return json_decode(File::get($json), true);
@@ -26,7 +27,8 @@ it('runs a short evening and passes the skip check', function () {
     expect($result['issued'])->toBeGreaterThan(0)
         ->and($result['max_skip_audited'])->toBeLessThanOrEqual(3)
         ->and($result['max_skip_audited'])->toBe($result['max_skip_stored'])
-        ->and($result['utilization'])->toBeGreaterThan(0.0)->toBeLessThanOrEqual(1.0);
+        ->and($result['utilization'])->toBeGreaterThan(0.0)->toBeLessThanOrEqual(1.0)
+        ->and($result['rejected_suggestions'])->toBe([]);
 });
 
 it('gives identical results for the same seed', function () {
