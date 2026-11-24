@@ -9,9 +9,18 @@
 
 @theme inline {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', ui-sans-serif,
+        system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display:
+        'Barlow Condensed', 'PingFang TC', 'Noto Sans TC', sans-serif;
+
+    /* 熱炒店色票：菜單板白、鐵板灰、招牌紅、台啤綠、蛋黃、鋁 */
+    --color-board: #f3f4f1;
+    --color-steel: #23292f;
+    --color-sign: #c4161c;
+    --color-beer: #00703c;
+    --color-yolk: #e8a100;
+    --color-alu: #9aa1a8;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);

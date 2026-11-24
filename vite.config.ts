@@ -12,8 +12,9 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                // 號碼與數字用窄體，像店內手寫菜單上又高又窄的字；中文交給裝置內建字型
+                bunny('Barlow Condensed', {
+                    weights: [500, 600, 700],
                 }),
             ],
         }),
@@ -68,6 +69,7 @@ export default defineConfig({
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
             '.github/**',
+            'docs/**',
             'composer.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
