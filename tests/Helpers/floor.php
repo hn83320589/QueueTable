@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\BusinessDay;
 use App\Domain\Enums\HoldReason;
 use App\Domain\Enums\TableStatus;
 use App\Domain\QueueLetter;
@@ -7,6 +8,10 @@ use App\Domain\Seating\AllocationResult;
 use App\Domain\Seating\FloorSnapshot;
 use App\Domain\Seating\TableSnapshot;
 use App\Domain\Seating\WaitingParty;
+use App\Models\DiningTable;
+use App\Services\QueueStateRefresher;
+use App\Support\ActorContext;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 以桌號建立測試用桌況。id 依陣列順序從 1 開始。
@@ -72,4 +77,17 @@ function suggestionMap(AllocationResult $result, FloorSnapshot $floor): array
     }
 
     return $map;
+}
+
+/**
+ * 模擬客人離開並清桌完成（Task 11 的 TableService 之前，測試用來把桌子直接變回可用）。
+ *
+ * @param  list<DiningTable>  $tables
+ */
+function freeTables(array $tables): void
+{
+    $ids = array_map(fn ($t) => $t->id, $tables);
+    DB::table('seating_tables')->whereIn('table_id', $ids)->whereNull('released_at')->update(['released_at' => now()]);
+    DiningTable::whereIn('id', $ids)->update(['status' => 'available', 'held_for_party_id' => null, 'hold_reason' => null]);
+    app(QueueStateRefresher::class)->refresh(BusinessDay::today(), ActorContext::system());
 }
