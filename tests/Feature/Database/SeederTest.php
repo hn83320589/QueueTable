@@ -49,11 +49,11 @@ describe('history', function () {
             ->and($dates->first())->toBe('2026-10-25');
     });
 
-    it('creates between 100 and 150 parties per day', function () {
+    it('creates between 85 and 130 parties per day', function () {
         $counts = Party::groupBy('business_date')->selectRaw('count(*) as c')->pluck('c');
 
-        expect($counts->min())->toBeGreaterThanOrEqual(100)
-            ->and($counts->max())->toBeLessThanOrEqual(150);
+        expect($counts->min())->toBeGreaterThanOrEqual(85)
+            ->and($counts->max())->toBeLessThanOrEqual(130);
     });
 
     it('never overlaps seatings on the same table', function () {

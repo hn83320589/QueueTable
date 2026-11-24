@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Board\BoardController;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function () {
 
     // 店長：桌位設定、帳號、營業日報表
     Route::middleware('manager')->prefix('admin')->group(function () {
+        Route::get('/reports', [ReportController::class, 'show'])->name('admin.reports');
+        Route::get('/reports/{date}/csv', [ReportController::class, 'csv']);
         Route::get('/tables', [TableController::class, 'index'])->name('admin.tables');
         Route::post('/tables', [TableController::class, 'store']);
         Route::put('/tables/{table}', [TableController::class, 'update']);

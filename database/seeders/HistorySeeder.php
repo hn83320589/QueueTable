@@ -30,7 +30,7 @@ class HistorySeeder extends Seeder
 
     public const DAYS = 30;
 
-    /** 每小時基本到達組數（17 點到隔天 1 點），每天再乘上 1.0–1.4 的倍率 → 每天約 105–147 組 */
+    /** 每小時基本到達組數（17 點到隔天 1 點），每天再乘上 0.85–1.2 的倍率 → 每天約 90–125 組 */
     private const HOURLY = [17 => 8, 18 => 20, 19 => 24, 20 => 16, 21 => 12, 22 => 10, 23 => 8, 0 => 5, 1 => 2];
 
     /** 人數分布（權重，總和 100）：9–12 人合計 3% */
@@ -65,7 +65,7 @@ class HistorySeeder extends Seeder
     private function seedDay(string $date): void
     {
         $open = CarbonImmutable::parse("{$date} 17:00");
-        $factor = 1.0 + $this->rng->getInt(0, 40) / 100;
+        $factor = 0.85 + $this->rng->getInt(0, 35) / 100;
 
         $arrivals = [];
         foreach (self::HOURLY as $hour => $rate) {
